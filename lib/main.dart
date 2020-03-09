@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import 'customs/draggable_number.dart';
 import 'customs/my_drag_target.dart';
@@ -27,16 +28,20 @@ class MyAppState extends State<MyApp> {
 
   ConditionManager conditionManager;
 
-  @override
-  Widget build(BuildContext context) {
+  var _suggestion = <String>[];
+
+  MyAppState() {
     conditionManager = ConditionManager(0, 10);
 
     generateNumber();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       key: scaffoldKey,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(32),
+        preferredSize: Size.fromHeight(48),
         child: AppBar(
           title: RichText(
             text: TextSpan(children: [
@@ -53,6 +58,13 @@ class MyAppState extends State<MyApp> {
               ),
             ]),
           ),
+          actions: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.settings_backup_restore),
+              tooltip: 'Show Snackbar',
+              onPressed: () => reset(),
+            ),
+          ],
         ),
       ),
       body: Column(
@@ -73,38 +85,75 @@ class MyAppState extends State<MyApp> {
             ),
             padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              MyDragTarget(
-                scaffoldKey: scaffoldKey,
-                value: conditionManager.minValue.toString(),
-                isLess: true,
-                mean: conditionManager.mean,
-              ),
-              MyDragTarget(
-                scaffoldKey: scaffoldKey,
-                value: conditionManager.maxValue.toString(),
-                isLess: false,
-                mean: conditionManager.mean,
-              )
-            ],
+          Padding(
+            padding: EdgeInsets.only(bottom: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                MyDragTarget(
+                  scaffoldKey: scaffoldKey,
+                  value: conditionManager.minValue.toString(),
+                  isLess: true,
+                  mean: conditionManager.mean,
+                ),
+                MyDragTarget(
+                  scaffoldKey: scaffoldKey,
+                  value: conditionManager.maxValue.toString(),
+                  isLess: false,
+                  mean: conditionManager.mean,
+                )
+              ],
+            ),
+          ),
+          Text('Generated numbers:'),
+          Expanded(
+            child: buildList(),
           )
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          generateNumber();
-        },
+        onPressed: () => updateNumber(),
         child: Icon(Icons.refresh),
       ),
     );
   }
 
+  Widget buildList() {
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.all(4.0),
+      itemBuilder: (_, i) {
+        return _buildRow(_suggestion[i]);
+      },
+      itemCount: _suggestion.length,
+      separatorBuilder: (BuildContext _, int __) => Divider(
+        color: Colors.black54,
+      ),
+    );
+  }
+
+  Widget _buildRow(String pair) {
+    return Container(
+      child: Text(pair),
+    );
+  }
+
+  void updateNumber() {
+    setState(() {
+      generateNumber();
+    });
+  }
+
   void generateNumber() {
-    return setState(() {
-      _number = conditionManager.minValue +
-          random.nextInt(conditionManager.maxValue - conditionManager.minValue);
+    _number = conditionManager.minValue +
+        random.nextInt(conditionManager.maxValue - conditionManager.minValue);
+
+    _suggestion.add(_number.toString());
+  }
+
+  void reset() {
+    setState(() {
+      _suggestion.clear();
     });
   }
 }
